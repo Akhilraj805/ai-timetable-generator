@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Department Timetable Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo"></div>
+            <h1>Department Timetable Generator</h1>
+            <p class="subtitle">Constraint Satisfaction based scheduling for your department</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs" id="mainNav">
+            <a href="/" class="nav-tab active">
+                <span class="nav-tab-icon">📚</span>
+                <span>Timetable Generator</span>
+            </a>
+            <a href="/teacher-availability/" class="nav-tab">
+                <span class="nav-tab-icon">👨‍🏫</span>
+                <span>Teacher Availability</span>
+            </a>
+        </nav>
+
+        <form id="timetableForm" method="POST" action="/generate/">
+            {% csrf_token %}
+
+            <!-- Semester type selection -->
+            <section class="card">
+                <div class="card-header">
+                    <span class="card-icon">📅</span>
+                    <h2>Semester</h2>
+                </div>
+                <div class="input-group" style="max-width: 320px;">
+                    <label for="semesterTypeSelect">Semester Type</label>
+                    <select id="semesterTypeSelect" name="semester_type" class="form-select">
+                        <option value="">Select semester type...</option>
+                        <option value="Odd">Odd Semester</option>
+                        <option value="Even">Even Semester</option>
+                    </select>
+                </div>
+            </section>
+
+            <!-- Per-class inputs (6 sections) -->
+            <section class="card">
+                <div class="card-header">
+                    <span class="card-icon">📚</span>
+                    <h2>Class Requirements</h2>
+                </div>
+
+                {% for i in "123456" %}
+                <div class="class-section" data-class-section="{{ forloop.counter }}" style="margin-bottom: 1.25rem;">
+                    <div class="input-grid" style="align-items: end;">
+                        <div class="input-group">
+                            <label>Class {{ forloop.counter }}</label>
+                            <select name="class_{{ forloop.counter }}" class="form-select class-select">
+                                <option value="">Select class...</option>
+                                {% for cls in classes %}
+                                <option value="{{ cls.class_id }}">{{ cls.class_name }} (Sem {{ cls.semester }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group" style="justify-content: flex-end;">
+                            <label style="opacity:0;">Add</label>
+                            <button type="button" class="btn-outline btn-sm add-row-btn">+ Add Subject Row</button>
+                        </div>
+                    </div>
+
+                    <div class="subject-rows" style="margin-top: 0.75rem;">
+                        <div class="subject-row input-grid" style="grid-template-columns: 1.4fr 1fr 1fr 0.6fr 0.7fr 0.8fr auto; align-items: end;">
+                            <div class="input-group">
+                                <label>Subject</label>
+                                <select name="class_{{ forloop.counter }}_subject[]" class="form-select subject-select">
+                                    <option value="">Select subject...</option>
+                                    {% for subj in subjects %}
+                                    <option value="{{ subj.subject_id }}"
+                                            data-class="{{ subj.class_ref.class_id }}"
+                                            data-semester="{{ subj.semester }}"
+                                            data-semester-type="{{ subj.semester_type }}"
+                                            data-type="{{ subj.subject_type }}">
+                                        {{ subj.subject_name }} ({{ subj.subject_type }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Teacher 1</label>
+                                <select name="class_{{ forloop.counter }}_teacher1[]" class="form-select">
+                                    <option value="">Select...</option>
+                                    {% for t in teachers %}
+                                    <option value="{{ t.teacher_id }}">{{ t.teacher_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Teacher 2 (Optional)</label>
+                                <select name="class_{{ forloop.counter }}_teacher2[]" class="form-select">
+                                    <option value="">None</option>
+                                    {% for t in teachers %}
+                                    <option value="{{ t.teacher_id }}">{{ t.teacher_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Hours</label>
+                                <input type="text" name="class_{{ forloop.counter }}_hours[]" placeholder="e.g. 4">
+                            </div>
+                            <div class="input-group">
+                                <label>Type</label>
+                                <select name="class_{{ forloop.counter }}_kind[]" class="form-select kind-select">
+                                    <option value="Theory">Theory</option>
+                                    <option value="Lab">Lab</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Lab Room</label>
+                                <select name="class_{{ forloop.counter }}_lab[]" class="form-select lab-select" disabled>
+                                    <option value="">Select...</option>
+                                    {% for lab in labs %}
+                                    <option value="{{ lab.lab_name }}">{{ lab.lab_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="input-group" style="justify-content: flex-end;">
+                                <label style="opacity:0;">Remove</label>
+                                <button type="button" class="btn-outline btn-sm remove-row-btn" title="Remove row">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </section>
+
+            <!-- Reserved Slots Section -->
+            <section class="card">
+                <div class="card-header">
+                    <span class="card-icon">🔒</span>
+                    <h2>Reserved Time Slots</h2>
+                </div>
+                <div id="reservedContainer">
+                    <div class="input-grid reserved-row" style="margin-bottom: 0.75rem;">
+                        <div class="input-group">
+                            <label>Class Selection</label>
+                            <select name="reserved_class" class="form-select">
+                                <option value="">All classes</option>
+                                {% for cls in classes %}
+                                <option value="{{ cls.class_id }}">{{ cls.class_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Day</label>
+                            <select name="reserved_day" class="form-select">
+                                <option value="">Select Day...</option>
+                                <option value="1">Monday</option>
+                                <option value="2">Tuesday</option>
+                                <option value="3">Wednesday</option>
+                                <option value="4">Thursday</option>
+                                <option value="5">Friday</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Hour</label>
+                            <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+                                <select name="reserved_hour" class="form-select" style="flex: 1;">
+                                    <option value="">Select Hour...</option>
+                                    <option value="1">Hour 1</option>
+                                    <option value="2">Hour 2</option>
+                                    <option value="3">Hour 3</option>
+                                    <option value="4">Hour 4</option>
+                                    <option value="5">Hour 5</option>
+                                    <option value="6">Hour 6</option>
+                                </select>
+                                <button type="button" class="btn-outline remove-slot-btn" style="padding: 0.75rem 1rem;" title="Remove Slot">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" id="addSlotBtn" class="btn-outline btn-sm" style="margin-top: 0.5rem;">
+                    + Add Another Slot
+                </button>
+            </section>
+
+            <!-- Submit -->
+            <div class="form-actions">
+                <button type="submit" id="generateBtn" class="btn-primary">
+                    <span class="btn-icon"></span>
+                    <span class="btn-text">Generate Timetable</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+
+</html>

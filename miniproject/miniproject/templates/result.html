@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generated Timetables</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <div class="container result-container">
+        <header class="header">
+            <div class="logo"></div>
+            <h1>Generated Timetables</h1>
+            <p class="subtitle">Optimized department timetables</p>
+            <div class="header-actions">
+                <button id="printBtn" class="btn-primary btn-sm" onclick="window.print()">
+                    <span class="btn-text">Print Results</span>
+                </button>
+                <a href="/" class="btn-outline btn-sm">
+                    <span class="btn-text">New Timetable</span>
+                </a>
+            </div>
+        </header>
+
+        {% if conflict_errors %}
+        <!-- Conflict Error Report -->
+        <section class="card conflict-card">
+            <div class="card-header">
+                <span class="card-icon">⚠️</span>
+                <h2>Timetable Generation Failed</h2>
+            </div>
+            <p class="conflict-summary">
+                The timetable could not be generated because some teachers have too many unavailable periods.
+                Please adjust teacher availability or reduce subject requirements.
+            </p>
+
+            {% for conflict in conflict_errors %}
+            <div class="conflict-item">
+                <div class="conflict-item-header">
+                    <span class="conflict-badge">{{ conflict.class_name }}</span>
+                    <strong>{{ conflict.subject_name }}</strong>
+                    <span class="conflict-meta">
+                        — Only {{ conflict.placed_hours }} of {{ conflict.required_hours }} required hours could be scheduled
+                    </span>
+                </div>
+
+                <div class="conflict-teachers">
+                    <strong>Teachers:</strong> {{ conflict.teacher_names|join:", " }}
+                </div>
+
+                {% if conflict.blocked_slots %}
+                <div class="conflict-slots">
+                    <strong>Unavailable periods causing the conflict:</strong>
+                    <div class="conflict-slot-list">
+                        {% for slot in conflict.blocked_slots %}
+                        <span class="conflict-slot-chip">
+                            {{ slot.teacher_name }} — {{ slot.day_name }} Period {{ slot.period }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <div class="conflict-actions">
+                <a href="/teacher-availability/" class="btn-primary btn-sm">
+                    <span class="btn-text">Edit Teacher Availability</span>
+                </a>
+                <a href="/" class="btn-outline btn-sm">
+                    <span class="btn-text">Back to Generator</span>
+                </a>
+            </div>
+        </section>
+
+        {% else %}
+        <!-- Normal Timetable Display -->
+        {% for class_name, grid in tables.items %}
+        <section class="card timetable-card">
+            <div class="timetable-header">
+                <h2><span class="class-badge" style="background: var(--grad-primary);">{{ class_name }}</span></h2>
+            </div>
+            <div class="table-wrapper">
+                <table class="timetable">
+                    <thead>
+                        <tr>
+                            <th class="th-day">Day</th>
+                            <th>H1</th>
+                            <th>H2</th>
+                            <th>H3</th>
+                            <th>H4</th>
+                            <th>H5</th>
+                            <th>H6</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in grid %}
+                        <tr>
+                            <!-- Day name -->
+                            {% if forloop.counter == 1 %}
+                            <td class="td-day">Mon</td>
+                            {% elif forloop.counter == 2 %}
+                            <td class="td-day">Tue</td>
+                            {% elif forloop.counter == 3 %}
+                            <td class="td-day">Wed</td>
+                            {% elif forloop.counter == 4 %}
+                            <td class="td-day">Thu</td>
+                            {% elif forloop.counter == 5 %}
+                            <td class="td-day">Fri</td>
+                            {% endif %}
+
+                            {% for cell in row %}
+                            {% if cell.block_type == "Subject" %}
+                            <td class="td-subject">
+                                <div class="cell-name">{{ cell.subject }}</div>
+                                {% if cell.teacher %}
+                                <div class="cell-teacher">{{ cell.teacher }}</div>
+                                {% endif %}
+                            </td>
+
+                            {% elif cell.block_type == "Lab" %}
+                            <td class="td-lab">
+                                <div class="cell-name">{{ cell.subject }}</div>
+                                {% if cell.teacher %}
+                                <div class="cell-teacher">{{ cell.teacher }}</div>
+                                {% endif %}
+                                {% if cell.lab %}
+                                <div class="cell-teacher">{{ cell.lab }}</div>
+                                {% endif %}
+                            </td>
+
+                            {% elif cell.block_type == "Reserved" %}
+                            <td class="td-reserved">
+                                <div class="cell-name">Reserved</div>
+                            </td>
+
+                            {% else %}
+                            <td class="td-empty">--</td>
+                            {% endif %}
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+
+</html>

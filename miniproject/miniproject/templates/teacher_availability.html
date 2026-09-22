@@ -1,0 +1,323 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Availability Matrix</title>
+    <meta name="description" content="Set teacher availability for timetable generation. Mark teachers as available or unavailable for each period.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo"></div>
+            <h1>Department Timetable Generator</h1>
+            <p class="subtitle">Constraint Satisfaction based scheduling for your department</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs" id="mainNav">
+            <a href="/" class="nav-tab">
+                <span class="nav-tab-icon">📚</span>
+                <span>Timetable Generator</span>
+            </a>
+            <a href="/teacher-availability/" class="nav-tab active">
+                <span class="nav-tab-icon">👨‍🏫</span>
+                <span>Teacher Availability</span>
+            </a>
+        </nav>
+
+        <!-- Teacher Selection -->
+        <section class="card">
+            <div class="card-header">
+                <span class="card-icon">👨‍🏫</span>
+                <h2>Teacher Availability Matrix</h2>
+            </div>
+            <p class="help-text">Select a teacher to view and edit their availability. Click cells to toggle between <strong>Available ✓</strong> and <strong>Unavailable ✗</strong>.</p>
+
+            <div class="input-group" style="max-width: 400px;">
+                <label for="teacherSelect">Select Teacher</label>
+                <select id="teacherSelect" class="form-select">
+                    <option value="">Choose a teacher...</option>
+                    {% for t in teachers %}
+                    <option value="{{ t.teacher_id }}">{{ t.teacher_name }}{% if t.designation %} — {{ t.designation }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </section>
+
+        <!-- Availability Matrix -->
+        <section class="card avail-card" id="matrixCard" style="display: none;">
+            <div class="card-header">
+                <span class="card-icon">📅</span>
+                <h2 id="matrixTitle">Availability Matrix</h2>
+            </div>
+
+            <div class="avail-legend">
+                <span class="legend-item legend-available"><span class="legend-swatch"></span> Available</span>
+                <span class="legend-item legend-unavailable"><span class="legend-swatch"></span> Unavailable</span>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="timetable avail-table" id="availMatrix">
+                    <thead>
+                        <tr>
+                            <th class="th-day">Day</th>
+                            <th>Period 1</th>
+                            <th>Period 2</th>
+                            <th>Period 3</th>
+                            <th>Period 4</th>
+                            <th>Period 5</th>
+                            <th>Period 6</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-day="0">
+                            <td class="td-day">Monday</td>
+                            <td class="avail-cell available" data-day="0" data-period="0"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="0" data-period="1"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="0" data-period="2"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="0" data-period="3"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="0" data-period="4"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="0" data-period="5"><span class="avail-icon">✓</span></td>
+                        </tr>
+                        <tr data-day="1">
+                            <td class="td-day">Tuesday</td>
+                            <td class="avail-cell available" data-day="1" data-period="0"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="1" data-period="1"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="1" data-period="2"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="1" data-period="3"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="1" data-period="4"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="1" data-period="5"><span class="avail-icon">✓</span></td>
+                        </tr>
+                        <tr data-day="2">
+                            <td class="td-day">Wednesday</td>
+                            <td class="avail-cell available" data-day="2" data-period="0"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="2" data-period="1"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="2" data-period="2"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="2" data-period="3"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="2" data-period="4"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="2" data-period="5"><span class="avail-icon">✓</span></td>
+                        </tr>
+                        <tr data-day="3">
+                            <td class="td-day">Thursday</td>
+                            <td class="avail-cell available" data-day="3" data-period="0"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="3" data-period="1"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="3" data-period="2"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="3" data-period="3"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="3" data-period="4"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="3" data-period="5"><span class="avail-icon">✓</span></td>
+                        </tr>
+                        <tr data-day="4">
+                            <td class="td-day">Friday</td>
+                            <td class="avail-cell available" data-day="4" data-period="0"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="4" data-period="1"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="4" data-period="2"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="4" data-period="3"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="4" data-period="4"><span class="avail-icon">✓</span></td>
+                            <td class="avail-cell available" data-day="4" data-period="5"><span class="avail-icon">✓</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="avail-actions">
+                <button type="button" id="markAllAvailable" class="btn-outline btn-sm">✓ Mark All Available</button>
+                <button type="button" id="markAllUnavailable" class="btn-outline btn-sm" style="color: var(--reserved-text); border-color: var(--reserved-text);">✗ Mark All Unavailable</button>
+            </div>
+
+            <!-- Save Button -->
+            <div class="form-actions" style="margin-top: 1.5rem;">
+                <button type="button" id="saveBtn" class="btn-primary">
+                    <span class="btn-text">💾 Save Availability</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const teacherSelect = document.getElementById('teacherSelect');
+        const matrixCard = document.getElementById('matrixCard');
+        const matrixTitle = document.getElementById('matrixTitle');
+        const saveBtn = document.getElementById('saveBtn');
+        const markAllAvailBtn = document.getElementById('markAllAvailable');
+        const markAllUnavailBtn = document.getElementById('markAllUnavailable');
+        const toast = document.getElementById('toast');
+        const cells = document.querySelectorAll('.avail-cell');
+
+        let currentTeacherId = null;
+
+        // ===== Show toast =====
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = 'toast toast-' + type + ' toast-show';
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+            }, 3000);
+        }
+
+        // ===== Toggle cell =====
+        cells.forEach(cell => {
+            cell.addEventListener('click', () => {
+                if (!currentTeacherId) return;
+                const icon = cell.querySelector('.avail-icon');
+                if (cell.classList.contains('available')) {
+                    cell.classList.remove('available');
+                    cell.classList.add('unavailable');
+                    icon.textContent = '✗';
+                } else {
+                    cell.classList.remove('unavailable');
+                    cell.classList.add('available');
+                    icon.textContent = '✓';
+                }
+                // Add a pop animation
+                cell.style.transform = 'scale(0.85)';
+                setTimeout(() => { cell.style.transform = ''; }, 150);
+            });
+        });
+
+        // ===== Load matrix for selected teacher =====
+        teacherSelect.addEventListener('change', async () => {
+            const teacherId = teacherSelect.value;
+            if (!teacherId) {
+                matrixCard.style.display = 'none';
+                currentTeacherId = null;
+                return;
+            }
+
+            currentTeacherId = teacherId;
+            const selectedText = teacherSelect.options[teacherSelect.selectedIndex].text;
+            matrixTitle.textContent = `Availability — ${selectedText}`;
+
+            try {
+                const resp = await fetch(`/api/teacher-availability/?teacher_id=${teacherId}`);
+                const data = await resp.json();
+
+                if (data.matrix) {
+                    data.matrix.forEach((row, dayIdx) => {
+                        row.forEach((isAvail, periodIdx) => {
+                            const cell = document.querySelector(
+                                `.avail-cell[data-day="${dayIdx}"][data-period="${periodIdx}"]`
+                            );
+                            if (cell) {
+                                const icon = cell.querySelector('.avail-icon');
+                                if (isAvail) {
+                                    cell.classList.remove('unavailable');
+                                    cell.classList.add('available');
+                                    icon.textContent = '✓';
+                                } else {
+                                    cell.classList.remove('available');
+                                    cell.classList.add('unavailable');
+                                    icon.textContent = '✗';
+                                }
+                            }
+                        });
+                    });
+                }
+
+                matrixCard.style.display = 'block';
+                // Animate in
+                matrixCard.style.opacity = '0';
+                matrixCard.style.transform = 'translateY(15px)';
+                requestAnimationFrame(() => {
+                    matrixCard.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                    matrixCard.style.opacity = '1';
+                    matrixCard.style.transform = 'translateY(0)';
+                });
+
+            } catch (err) {
+                showToast('Failed to load availability data', 'error');
+                console.error(err);
+            }
+        });
+
+        // ===== Save matrix =====
+        saveBtn.addEventListener('click', async () => {
+            if (!currentTeacherId) {
+                showToast('Please select a teacher first', 'error');
+                return;
+            }
+
+            // Build matrix from DOM
+            const matrix = [];
+            for (let d = 0; d < 5; d++) {
+                const row = [];
+                for (let p = 0; p < 6; p++) {
+                    const cell = document.querySelector(
+                        `.avail-cell[data-day="${d}"][data-period="${p}"]`
+                    );
+                    row.push(cell ? cell.classList.contains('available') : true);
+                }
+                matrix.push(row);
+            }
+
+            // Disable button during save
+            saveBtn.disabled = true;
+            const btnText = saveBtn.querySelector('.btn-text');
+            const origText = btnText.textContent;
+            btnText.textContent = 'Saving...';
+
+            try {
+                const resp = await fetch('/api/teacher-availability/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ teacher_id: currentTeacherId, matrix }),
+                });
+                const data = await resp.json();
+
+                if (data.status === 'saved') {
+                    showToast('Availability saved successfully!', 'success');
+                } else {
+                    showToast(data.error || 'Save failed', 'error');
+                }
+            } catch (err) {
+                showToast('Network error — could not save', 'error');
+                console.error(err);
+            } finally {
+                saveBtn.disabled = false;
+                btnText.textContent = origText;
+            }
+        });
+
+        // ===== Mark all =====
+        markAllAvailBtn.addEventListener('click', () => {
+            cells.forEach(cell => {
+                cell.classList.remove('unavailable');
+                cell.classList.add('available');
+                cell.querySelector('.avail-icon').textContent = '✓';
+            });
+        });
+
+        markAllUnavailBtn.addEventListener('click', () => {
+            cells.forEach(cell => {
+                cell.classList.remove('available');
+                cell.classList.add('unavailable');
+                cell.querySelector('.avail-icon').textContent = '✗';
+            });
+        });
+
+        // ===== Animate cards on load =====
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(15px)';
+            el.style.transition = `opacity 0.4s ease ${i * 0.1 + 0.1}s, transform 0.4s ease ${i * 0.1 + 0.1}s`;
+            requestAnimationFrame(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            });
+        });
+    });
+    </script>
+</body>
+
+</html>
